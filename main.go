@@ -8,6 +8,7 @@ import (
 	"os"
   "github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+  "strings"
 )
 
 type Input struct {
@@ -18,7 +19,7 @@ type Input struct {
 
 type Output struct {
 	SlackUsername string `json:"slackUsername"`
-	Result       int   `json:"Result"`
+	Result       int   `json:"result"`
 	OperationType  string    `json:"operation_type"`
 }
 
@@ -29,20 +30,42 @@ fmt.Println("Calculating.... \n")
 var input Input
 json.NewDecoder(r.Body).Decode(&input)
 
-// input.OperationType = "hello"
-// input.X = 9
-// input.Y = 7
+// var OperationType = struct {
+//   Addition string
+//   Subtraction  string
+//   Multiplication  string
+// }{
+//   Addition: "addition",
+//   Subtraction:  "subtraction",
+//   Multiplication:     "multiplication",
+// }
 
-z := input.X + input.Y
+var z int
+var OperationTypeReturn string
+OperationTypeLowerCase := strings.ToLower(input.OperationType)
+if OperationTypeLowerCase == "addition" {
+z = input.X + input.Y
+OperationTypeReturn = "addition"
+}else if  OperationTypeLowerCase == "subtraction"{
+z = input.X - input.Y
+OperationTypeReturn = "subtraction"
+}else if  OperationTypeLowerCase == "multiplication"{
+z = input.X * input.Y
+OperationTypeReturn = "multiplication"
+}else {
+  z = 0
+  OperationTypeReturn = "Not Supported"
+}
+
 
 fmt.Println(z)
 fmt.Println(input)
 
 var output Output
 
-output.SlackUsername = "lordscoba"
+output.SlackUsername = "Scoba"
 output.Result = z
-output.OperationType = input.OperationType
+output.OperationType = OperationTypeReturn
 
 //set header tag
 w.Header().Set("Content-Type", "application/json")
