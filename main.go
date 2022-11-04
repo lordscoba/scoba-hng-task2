@@ -6,52 +6,60 @@ import (
 	"log"
 	"net/http"
 	"os"
-
+  "github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
 
-type Person struct {
-	SlackUsername string `json:"slackUsername"`
-	Backend       bool   `json:"backend"`
-	Age           int    `json:"age"`
-	Bio           string `json:"bio"`
+type Input struct {
+	OperationType string `json:"operation_type"`
+	X       int   `json:"x"`
+	Y      int    `json:"y"`
 }
 
-func CallScoba(w http.ResponseWriter, r *http.Request) {
+type Output struct {
+	SlackUsername string `json:"slackUsername"`
+	Result       int   `json:"Result"`
+	OperationType  string    `json:"operation_type"`
+}
 
-	// respresenting the data in string form
-	// data := &person{ SlackUsername: "scoba", Backend: true, Age: 26, Bio:"I am a backend developer with golang Technology"}
 
-	//representing data in another format
-	var data Person
-	data.SlackUsername = "Scoba is testing"
-	data.Backend = true
-	data.Age = 26
-	data.Bio = "I am a backend developer with golang Technology"
+func Calculate(w http.ResponseWriter, r *http.Request) {
 
-	// use marshal func to convert to json
-	//     out, err := json.Marshal(data)
-	//     if err != nil {
-	//         fmt.Println(err)
-	//         return
-	//     }
-	//
-	//   fmt.Println(string(out))
+fmt.Println("Calculating.... \n")
+var input Input
+json.NewDecoder(r.Body).Decode(&input)
 
-	// set headers content type
-	w.Header().Add("Content-Type", "application/json")
+// input.OperationType = "hello"
+// input.X = 9
+// input.Y = 7
+
+z := input.X + input.Y
+
+fmt.Println(z)
+fmt.Println(input)
+
+var output Output
+
+output.SlackUsername = "lordscoba"
+output.Result = z
+output.OperationType = input.OperationType
+
+//set header tag
+w.Header().Set("Content-Type", "application/json")
 	//Allow CORS here By * or specific origin
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT")
 	w.Header().Set("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers")
 
-	json.NewEncoder(w).Encode(data)
+  json.NewEncoder(w).Encode(output)
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
-	err := godotenv.Load()
 
+
+	err := godotenv.Load()
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
@@ -59,7 +67,11 @@ func main() {
 	if port == "" {
 		port = "3000"
 	}
-	http.HandleFunc("/", CallScoba)
+
+  r := mux.NewRouter()
+  r.HandleFunc("/", Calculate).Methods("POST")
+  http.Handle("/", r)
+
 	fmt.Print("Listening on :" + port)
 	err = http.ListenAndServe(":"+port, nil)
 	if err != nil {
